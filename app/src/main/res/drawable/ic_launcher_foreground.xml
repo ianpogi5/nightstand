@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crescent moon, drawn as one big circle minus an offset circle
+     (even-odd fill), centered in the adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#F5F0E6"
+        android:fillType="evenOdd"
+        android:pathData="M54,32 A22,22 0 1,0 54,76 A22,22 0 1,0 54,32 Z
+                          M62,38 A17,17 0 1,1 62,70 A17,17 0 1,1 62,38 Z" />
+</vector>
