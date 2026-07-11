@@ -78,12 +78,24 @@ Anything beyond this list needs a written justification added here first.
 
 ## Milestones
 
-- [ ] M1: Gradle scaffold builds; empty Compose activity runs on the S23+.
-- [ ] M2: Clock face + keep-screen-on + dim + burn-in shift (manual launch).
-- [ ] M3: Calendar column.
-- [ ] M4: Auto-launch service (charging + landscape), onboarding for
+- [x] M1: Gradle scaffold builds; empty Compose activity runs on the S23+.
+- [x] M2: Clock face + keep-screen-on + dim + burn-in shift (manual launch).
+- [x] M3: Calendar column.
+- [x] M4: Auto-launch service (charging + landscape), onboarding for
       permissions, One UI battery-exemption guidance.
 - [ ] M5: Settings screen; polish; v0.1 tag + APK via GitHub Actions.
+
+Status 2026-07-11: M1–M4 implemented and building; **none of it verified
+on the S23+ yet** (no adb device was attached). CI builds a debug APK.
+Remaining for v0.1: on-device verification pass, dim-level/clock-style
+settings, calendar picker, tag + release.
+
+Implementation notes vs. the original plan:
+- SharedPreferences instead of DataStore — BootReceiver needs a
+  synchronous read, and the settings surface is a few booleans.
+- Landscape detection reads the accelerometer directly (gravity on the
+  x-axis) rather than OrientationEventListener, and only between
+  power-connected and launch/disconnect.
 
 ## Verification
 
