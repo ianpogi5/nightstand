@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -79,10 +81,16 @@ fun SetupSheet(onDismiss: () -> Unit) {
         color = Color(0xF2121216),
         contentColor = Color(0xFFEDEDED),
         shape = RoundedCornerShape(24.dp),
-        modifier = Modifier.width(440.dp),
+        modifier = Modifier
+            .padding(vertical = 24.dp)
+            .width(440.dp),
     ) {
+        // Landscape phone screens are short; the sheet must scroll rather
+        // than clip its bottom rows.
         Column(
-            modifier = Modifier.padding(horizontal = 28.dp, vertical = 24.dp),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 28.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(text = stringResource(R.string.setup_title), fontSize = 22.sp)

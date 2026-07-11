@@ -85,9 +85,11 @@ Anything beyond this list needs a written justification added here first.
       permissions, One UI battery-exemption guidance.
 - [ ] M5: Settings screen; polish; v0.1 tag + APK via GitHub Actions.
 
-Status 2026-07-11: M1–M4 implemented and building; **none of it verified
-on the S23+ yet** (no adb device was attached). CI builds a debug APK.
-Remaining for v0.1: on-device verification pass, dim-level/clock-style
+Status 2026-07-11: M1–M4 implemented and **verified on the S23+**
+(SM-S916B): install, clock/calendar render, dim toggle, unplug → exit,
+plug + landscape → auto-launch, boot → service restarts after first
+unlock. Not yet verified: One UI "sleeping apps" over multiple days.
+CI builds a debug APK. Remaining for v0.1: dim-level/clock-style
 settings, calendar picker, tag + release.
 
 Implementation notes vs. the original plan:
