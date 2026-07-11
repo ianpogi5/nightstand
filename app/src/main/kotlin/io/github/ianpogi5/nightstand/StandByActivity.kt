@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -30,9 +31,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import io.github.ianpogi5.nightstand.trigger.ChargingTriggerService
 import io.github.ianpogi5.nightstand.ui.SetupSheet
 import io.github.ianpogi5.nightstand.ui.StandByScreen
-
-/** Hardware brightness while night-dimmed, on a 0..1 scale. */
-private const val NIGHT_BRIGHTNESS = 0.05f
 
 class StandByActivity : ComponentActivity() {
 
@@ -59,11 +57,17 @@ class StandByActivity : ComponentActivity() {
         }
 
         setContent {
+            // Bumped whenever the setup sheet writes a pref, so reads refresh.
+            var settingsRev by rememberSaveable { mutableStateOf(0) }
+            val nightBrightness = remember(settingsRev) { Prefs.nightBrightness(this) }
+            val clockStyle = remember(settingsRev) { Prefs.clockStyle(this) }
+            val hiddenCalendars = remember(settingsRev) { Prefs.hiddenCalendars(this) }
+
             var nightDim by rememberSaveable { mutableStateOf(true) }
-            LaunchedEffect(nightDim) {
+            LaunchedEffect(nightDim, nightBrightness) {
                 setScreenBrightness(
                     if (nightDim) {
-                        NIGHT_BRIGHTNESS
+                        nightBrightness
                     } else {
                         WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
                     }
@@ -89,6 +93,8 @@ class StandByActivity : ComponentActivity() {
                     dimmed = nightDim,
                     onToggleDim = { nightDim = !nightDim },
                     hasCalendarPermission = hasCalendarPermission,
+                    clockStyle = clockStyle,
+                    hiddenCalendars = hiddenCalendars,
                     onOpenSetup = { showSetup = true },
                 )
                 if (showSetup) {
@@ -99,6 +105,8 @@ class StandByActivity : ComponentActivity() {
                         contentAlignment = Alignment.Center,
                     ) {
                         SetupSheet(
+                            hasCalendarPermission = hasCalendarPermission,
+                            onSettingsChanged = { settingsRev++ },
                             onDismiss = {
                                 showSetup = false
                                 Prefs.setSetupShown(this@StandByActivity)

@@ -83,14 +83,16 @@ Anything beyond this list needs a written justification added here first.
 - [x] M3: Calendar column.
 - [x] M4: Auto-launch service (charging + landscape), onboarding for
       permissions, One UI battery-exemption guidance.
-- [ ] M5: Settings screen; polish; v0.1 tag + APK via GitHub Actions.
+- [x] M5: Settings screen; polish; v0.1 tag + APK via GitHub Actions.
 
-Status 2026-07-11: M1–M4 implemented and **verified on the S23+**
-(SM-S916B): install, clock/calendar render, dim toggle, unplug → exit,
+Status 2026-07-11: v0.1.0 shipped. M1–M5 verified on the S23+
+(SM-S916B), including the R8-minified release build: install,
+clock/calendar render, dim toggle, clock styles, night-brightness
+slider, calendar picker (filter confirmed end-to-end), unplug → exit,
 plug + landscape → auto-launch, boot → service restarts after first
 unlock. Not yet verified: One UI "sleeping apps" over multiple days.
-CI builds a debug APK. Remaining for v0.1: dim-level/clock-style
-settings, calendar picker, tag + release.
+Release APKs are signed locally (keystore outside the repo, creds in
+local.properties); CI builds an unsigned debug artifact.
 
 Implementation notes vs. the original plan:
 - SharedPreferences instead of DataStore — BootReceiver needs a

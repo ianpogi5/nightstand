@@ -15,4 +15,9 @@
     <string name="setup_oneui_note">On Samsung (One UI), also set Battery to “Unrestricted” in App info — otherwise the system quietly stops the charger trigger after a few days.</string>
     <string name="setup_app_info">Open App info</string>
     <string name="setup_done">Done</string>
+    <string name="setup_clock_style">Clock</string>
+    <string name="setup_clock_digital">Digital</string>
+    <string name="setup_clock_analog">Analog</string>
+    <string name="setup_night_brightness">Night brightness</string>
+    <string name="setup_calendars">Calendars</string>
 </resources>

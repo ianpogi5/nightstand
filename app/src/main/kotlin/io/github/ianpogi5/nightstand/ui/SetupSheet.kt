@@ -7,14 +7,20 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -36,16 +42,28 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.text.style.TextOverflow
 import io.github.ianpogi5.nightstand.Prefs
 import io.github.ianpogi5.nightstand.R
+import io.github.ianpogi5.nightstand.calendar.Calendars
 import io.github.ianpogi5.nightstand.trigger.ChargingTriggerService
 
 @Composable
-fun SetupSheet(onDismiss: () -> Unit) {
+fun SetupSheet(
+    hasCalendarPermission: Boolean,
+    onSettingsChanged: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val context = LocalContext.current
     var autoLaunch by remember { mutableStateOf(Prefs.autoLaunchEnabled(context)) }
     var landscapeOnly by remember { mutableStateOf(Prefs.landscapeOnly(context)) }
     var canOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+    var clockStyle by remember { mutableStateOf(Prefs.clockStyle(context)) }
+    var nightBrightness by remember { mutableStateOf(Prefs.nightBrightness(context)) }
+    var hiddenCalendars by remember { mutableStateOf(Prefs.hiddenCalendars(context)) }
+    val calendars = remember {
+        if (hasCalendarPermission) Calendars.query(context) else emptyList()
+    }
 
     // The overlay grant happens in system settings; re-check when we return.
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -95,6 +113,46 @@ fun SetupSheet(onDismiss: () -> Unit) {
         ) {
             Text(text = stringResource(R.string.setup_title), fontSize = 22.sp)
 
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = stringResource(R.string.setup_clock_style),
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                StyleChoice(
+                    label = stringResource(R.string.setup_clock_digital),
+                    selected = clockStyle == Prefs.CLOCK_DIGITAL,
+                ) {
+                    clockStyle = Prefs.CLOCK_DIGITAL
+                    Prefs.setClockStyle(context, clockStyle)
+                    onSettingsChanged()
+                }
+                StyleChoice(
+                    label = stringResource(R.string.setup_clock_analog),
+                    selected = clockStyle == Prefs.CLOCK_ANALOG,
+                ) {
+                    clockStyle = Prefs.CLOCK_ANALOG
+                    Prefs.setClockStyle(context, clockStyle)
+                    onSettingsChanged()
+                }
+            }
+
+            Column {
+                Text(text = stringResource(R.string.setup_night_brightness), fontSize = 16.sp)
+                Slider(
+                    value = nightBrightness,
+                    onValueChange = { nightBrightness = it },
+                    onValueChangeFinished = {
+                        Prefs.setNightBrightness(context, nightBrightness)
+                        onSettingsChanged()
+                    },
+                    valueRange = 0.01f..0.4f,
+                )
+            }
+
             SwitchRow(
                 label = stringResource(R.string.setup_auto_launch),
                 checked = autoLaunch,
@@ -142,6 +200,43 @@ fun SetupSheet(onDismiss: () -> Unit) {
                 color = Color(0xFF9A9A9A),
             )
 
+            if (calendars.isNotEmpty()) {
+                Text(text = stringResource(R.string.setup_calendars), fontSize = 16.sp)
+                calendars.forEach { calendar ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .background(Color(calendar.color), CircleShape),
+                        )
+                        Text(
+                            text = calendar.name,
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 12.dp),
+                        )
+                        Checkbox(
+                            checked = calendar.id !in hiddenCalendars,
+                            onCheckedChange = { shown ->
+                                hiddenCalendars = if (shown) {
+                                    hiddenCalendars - calendar.id
+                                } else {
+                                    hiddenCalendars + calendar.id
+                                }
+                                Prefs.setHiddenCalendars(context, hiddenCalendars)
+                                onSettingsChanged()
+                            },
+                        )
+                    }
+                }
+            }
+
             Row(modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = { context.openAppInfo() }) {
                     Text(stringResource(R.string.setup_app_info))
@@ -152,6 +247,16 @@ fun SetupSheet(onDismiss: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StyleChoice(label: String, selected: Boolean, onClick: () -> Unit) {
+    TextButton(onClick = onClick) {
+        Text(
+            text = label,
+            color = if (selected) Color(0xFFB9A0F0) else Color(0xFF9A9A9A),
+        )
     }
 }
 

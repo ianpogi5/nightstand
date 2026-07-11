@@ -8,9 +8,11 @@ permission at all**.
 Inspired by iOS 17's StandBy. Built because the Play Store alternatives
 show you an ad the moment your phone touches the charger.
 
-Status: **pre-release** — clock, calendar, and charger auto-launch are
-implemented; on-device verification and v0.1 are in progress. See
-[PLAN.md](PLAN.md).
+Status: **v0.1.0** — digital/analog clock, today's calendar with
+per-calendar filtering, night-brightness control, and charger
+auto-launch, all verified on a Galaxy S23+. APK on the
+[releases page](https://github.com/ianpogi5/nightstand/releases).
+See [PLAN.md](PLAN.md) for what's next.
 
 ## Building
 

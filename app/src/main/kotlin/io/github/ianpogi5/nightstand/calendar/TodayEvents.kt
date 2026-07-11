@@ -22,7 +22,11 @@ object TodayEvents {
      * Instances from all visible calendars between now and the end of the
      * local day, soonest first. Caller must hold READ_CALENDAR.
      */
-    fun query(context: Context, max: Int = 5): List<EventInstance> {
+    fun query(
+        context: Context,
+        hiddenCalendars: Set<Long> = emptySet(),
+        max: Int = 5,
+    ): List<EventInstance> {
         val zone = ZoneId.systemDefault()
         val now = Instant.now()
         val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant()
@@ -41,9 +45,13 @@ object TodayEvents {
             CalendarContract.Instances.ALL_DAY,
             CalendarContract.Instances.DISPLAY_COLOR,
         )
-        val selection = "${CalendarContract.Instances.VISIBLE} = 1 AND " +
+        var selection = "${CalendarContract.Instances.VISIBLE} = 1 AND " +
             "${CalendarContract.Instances.SELF_ATTENDEE_STATUS} != " +
             "${CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED}"
+        if (hiddenCalendars.isNotEmpty()) {
+            selection += " AND ${CalendarContract.Instances.CALENDAR_ID} NOT IN " +
+                hiddenCalendars.joinToString(",", "(", ")")
+        }
 
         val events = mutableListOf<EventInstance>()
         context.contentResolver.query(

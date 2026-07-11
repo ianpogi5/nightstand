@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.ianpogi5.nightstand.Prefs
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
@@ -38,11 +39,13 @@ fun StandByScreen(
     dimmed: Boolean,
     onToggleDim: () -> Unit,
     hasCalendarPermission: Boolean,
+    clockStyle: String,
+    hiddenCalendars: Set<Long>,
     onOpenSetup: () -> Unit,
 ) {
     val now by rememberMinuteTime()
     val battery = rememberBatteryStatus()
-    val events = rememberTodayEvents(now, hasCalendarPermission)
+    val events = rememberTodayEvents(now, hasCalendarPermission, hiddenCalendars)
 
     // Fresh pseudo-random offset each minute so no pixel stays lit in place.
     val shift = remember(now.hour to now.minute) {
@@ -72,7 +75,15 @@ fun StandByScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Clock(time = now, color = contentColor)
+                if (clockStyle == Prefs.CLOCK_ANALOG) {
+                    AnalogClock(
+                        time = now,
+                        color = contentColor,
+                        secondaryColor = secondaryColor,
+                    )
+                } else {
+                    Clock(time = now, color = contentColor)
+                }
                 Text(
                     text = now.toLocalDate().format(dateFormatter),
                     color = secondaryColor,

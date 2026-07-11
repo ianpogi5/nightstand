@@ -34,12 +34,16 @@ import kotlinx.coroutines.withContext
 
 /** Re-queries today's remaining events whenever the minute ticks. */
 @Composable
-fun rememberTodayEvents(now: LocalDateTime, hasPermission: Boolean): List<EventInstance> {
+fun rememberTodayEvents(
+    now: LocalDateTime,
+    hasPermission: Boolean,
+    hiddenCalendars: Set<Long>,
+): List<EventInstance> {
     val context = LocalContext.current
     var events by remember { mutableStateOf(emptyList<EventInstance>()) }
-    LaunchedEffect(now.hour, now.minute, hasPermission) {
+    LaunchedEffect(now.hour, now.minute, hasPermission, hiddenCalendars) {
         events = if (hasPermission) {
-            withContext(Dispatchers.IO) { TodayEvents.query(context) }
+            withContext(Dispatchers.IO) { TodayEvents.query(context, hiddenCalendars) }
         } else {
             emptyList()
         }
