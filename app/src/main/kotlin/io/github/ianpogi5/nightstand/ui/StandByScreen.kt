@@ -6,9 +6,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,9 +37,11 @@ private val dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMMM d")
 fun StandByScreen(
     dimmed: Boolean,
     onToggleDim: () -> Unit,
+    hasCalendarPermission: Boolean,
 ) {
     val now by rememberMinuteTime()
     val battery = rememberBatteryStatus()
+    val events = rememberTodayEvents(now, hasCalendarPermission)
 
     // Fresh pseudo-random offset each minute so no pixel stays lit in place.
     val shift = remember(now.hour to now.minute) {
@@ -58,20 +64,29 @@ fun StandByScreen(
                 onClick = onToggleDim,
             ),
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .align(Alignment.Center)
                 .offset { IntOffset(shift.x.dp.roundToPx(), shift.y.dp.roundToPx()) },
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Clock(time = now, color = contentColor)
-            Text(
-                text = now.toLocalDate().format(dateFormatter),
-                color = secondaryColor,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Light,
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Clock(time = now, color = contentColor)
+                Text(
+                    text = now.toLocalDate().format(dateFormatter),
+                    color = secondaryColor,
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Light,
+                )
+            }
+            if (events.isNotEmpty()) {
+                Spacer(modifier = Modifier.width(72.dp))
+                CalendarColumn(
+                    events = events,
+                    dimmed = dimmed,
+                    modifier = Modifier.widthIn(max = 320.dp),
+                )
+            }
         }
 
         BatteryIndicator(

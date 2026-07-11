@@ -1,9 +1,14 @@
 package io.github.ianpogi5.nightstand
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,9 +45,23 @@ class StandByActivity : ComponentActivity() {
                     }
                 )
             }
+
+            var hasCalendarPermission by rememberSaveable {
+                mutableStateOf(hasPermission(Manifest.permission.READ_CALENDAR))
+            }
+            val permissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission(),
+            ) { granted -> hasCalendarPermission = granted }
+            LaunchedEffect(Unit) {
+                if (!hasCalendarPermission) {
+                    permissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+                }
+            }
+
             StandByScreen(
                 dimmed = nightDim,
                 onToggleDim = { nightDim = !nightDim },
+                hasCalendarPermission = hasCalendarPermission,
             )
         }
     }
@@ -50,4 +69,7 @@ class StandByActivity : ComponentActivity() {
     private fun setScreenBrightness(value: Float) {
         window.attributes = window.attributes.apply { screenBrightness = value }
     }
+
+    private fun hasPermission(permission: String): Boolean =
+        ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
 }
