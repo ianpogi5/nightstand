@@ -38,6 +38,7 @@ fun StandByScreen(
     dimmed: Boolean,
     onToggleDim: () -> Unit,
     hasCalendarPermission: Boolean,
+    onOpenSetup: () -> Unit,
 ) {
     val now by rememberMinuteTime()
     val battery = rememberBatteryStatus()
@@ -96,6 +97,21 @@ fun StandByScreen(
                 .align(Alignment.BottomEnd)
                 .padding(32.dp)
                 .offset { IntOffset(shift.x.dp.roundToPx(), shift.y.dp.roundToPx()) },
+        )
+
+        Text(
+            text = "⚙",
+            color = secondaryColor.copy(alpha = 0.6f),
+            fontSize = 20.sp,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(24.dp)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onOpenSetup,
+                )
+                .padding(8.dp),
         )
     }
 }

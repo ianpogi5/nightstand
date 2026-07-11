@@ -1,4 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nightstand</string>
+
+    <string name="trigger_channel_name">Charger trigger</string>
+    <string name="trigger_notification_title">Waiting for the charger</string>
+
+    <string name="setup_title">Nightstand setup</string>
+    <string name="setup_auto_launch">Auto-launch when charging</string>
+    <string name="setup_landscape_only">Only in landscape</string>
+    <string name="setup_overlay">Display over other apps</string>
+    <string name="setup_overlay_rationale">Android only lets an app appear on its own when this is allowed. It is the one system permission auto-launch needs.</string>
+    <string name="setup_overlay_granted">Allowed</string>
+    <string name="setup_overlay_open">Allow…</string>
+    <string name="setup_oneui_note">On Samsung (One UI), also set Battery to “Unrestricted” in App info — otherwise the system quietly stops the charger trigger after a few days.</string>
+    <string name="setup_app_info">Open App info</string>
+    <string name="setup_done">Done</string>
 </resources>
