@@ -6,6 +6,7 @@ import android.provider.CalendarContract
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 data class EventInstance(
     val eventId: Long,
@@ -61,19 +62,33 @@ object TodayEvents {
             null,
             "${CalendarContract.Instances.BEGIN} ASC",
         )?.use { cursor ->
-            while (cursor.moveToNext() && events.size < max) {
-                val end = Instant.ofEpochMilli(cursor.getLong(3))
-                if (end < now) continue // already over
+            while (cursor.moveToNext()) {
+                val allDay = cursor.getInt(4) == 1
+                var begin = Instant.ofEpochMilli(cursor.getLong(2))
+                var end = Instant.ofEpochMilli(cursor.getLong(3))
+                if (allDay) {
+                    // All-day instances are stored as UTC midnights; remap them to
+                    // local-day boundaries so yesterday's events don't linger past
+                    // local midnight (and tomorrow's don't appear early).
+                    begin = begin.utcDateAtStartOfDay(zone)
+                    end = end.utcDateAtStartOfDay(zone)
+                }
+                if (end < now || begin >= endOfDay) continue // over, or not today
                 events += EventInstance(
                     eventId = cursor.getLong(0),
                     title = cursor.getString(1).orEmpty().ifBlank { "(untitled)" },
-                    begin = Instant.ofEpochMilli(cursor.getLong(2)),
+                    begin = begin,
                     end = end,
-                    allDay = cursor.getInt(4) == 1,
+                    allDay = allDay,
                     color = cursor.getInt(5),
                 )
             }
         }
-        return events
+        // Re-sort: remapping all-day begins to local midnight can reorder them
+        // relative to the provider's BEGIN ASC ordering.
+        return events.sortedBy { it.begin }.take(max)
     }
+
+    private fun Instant.utcDateAtStartOfDay(zone: ZoneId): Instant =
+        atZone(ZoneOffset.UTC).toLocalDate().atStartOfDay(zone).toInstant()
 }
