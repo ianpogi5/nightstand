@@ -20,16 +20,15 @@ data class EventInstance(
 object TodayEvents {
 
     /**
-     * Instances from all visible calendars between now and the end of the
-     * local day, soonest first. Caller must hold READ_CALENDAR.
+     * All of today's instances from all visible calendars, soonest first —
+     * including ones already over, so the caller can cache the list and
+     * filter by the current time itself. Caller must hold READ_CALENDAR.
      */
     fun query(
         context: Context,
         hiddenCalendars: Set<Long> = emptySet(),
-        max: Int = 5,
     ): List<EventInstance> {
         val zone = ZoneId.systemDefault()
-        val now = Instant.now()
         val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant()
         val endOfDay = LocalDate.now(zone).plusDays(1).atStartOfDay(zone).toInstant()
 
@@ -73,7 +72,7 @@ object TodayEvents {
                     begin = begin.utcDateAtStartOfDay(zone)
                     end = end.utcDateAtStartOfDay(zone)
                 }
-                if (end < now || begin >= endOfDay) continue // over, or not today
+                if (end < startOfDay || begin >= endOfDay) continue // not today
                 events += EventInstance(
                     eventId = cursor.getLong(0),
                     title = cursor.getString(1).orEmpty().ifBlank { "(untitled)" },
@@ -86,7 +85,7 @@ object TodayEvents {
         }
         // Re-sort: remapping all-day begins to local midnight can reorder them
         // relative to the provider's BEGIN ASC ordering.
-        return events.sortedBy { it.begin }.take(max)
+        return events.sortedBy { it.begin }
     }
 
     private fun Instant.utcDateAtStartOfDay(zone: ZoneId): Instant =
