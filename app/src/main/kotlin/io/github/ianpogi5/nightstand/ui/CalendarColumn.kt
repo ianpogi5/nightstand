@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import io.github.ianpogi5.nightstand.calendar.EventInstance
 import io.github.ianpogi5.nightstand.calendar.TodayEvents
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -41,10 +42,11 @@ import kotlinx.coroutines.withContext
 private const val MAX_EVENTS = 5
 
 /**
- * Today's remaining events. The provider is queried on launch, at local-day
- * rollover, and when calendar data changes (ContentObserver); the minute
- * tick only re-filters the cached list, so an all-night session isn't
- * issuing a ContentResolver query every minute.
+ * Today's remaining events, or — when today has none left — the next upcoming
+ * event within the query window (the next 7 days). The provider is queried on
+ * launch, at local-day rollover, and when calendar data changes
+ * (ContentObserver); the minute tick only re-filters the cached list, so an
+ * all-night session isn't issuing a ContentResolver query every minute.
  */
 @Composable
 fun rememberTodayEvents(
@@ -82,9 +84,13 @@ fun rememberTodayEvents(
         }
     }
 
-    val nowInstant = now.atZone(ZoneId.systemDefault()).toInstant()
+    val zone = ZoneId.systemDefault()
+    val nowInstant = now.atZone(zone).toInstant()
+    val endOfToday = now.toLocalDate().plusDays(1).atStartOfDay(zone).toInstant()
     return remember(todaysEvents, now.hour to now.minute) {
-        todaysEvents.filter { it.end >= nowInstant }.take(MAX_EVENTS)
+        val upcoming = todaysEvents.filter { it.end >= nowInstant }
+        val todayLeft = upcoming.filter { it.begin < endOfToday }
+        if (todayLeft.isNotEmpty()) todayLeft.take(MAX_EVENTS) else upcoming.take(1)
     }
 }
 
@@ -145,10 +151,23 @@ private fun EventRow(
 }
 
 private fun EventInstance.timeLabel(is24Hour: Boolean): String {
-    if (allDay) return "All day"
+    val prefix = dayPrefix()?.let { "$it · " }.orEmpty()
+    if (allDay) return "${prefix}All day"
     val pattern = if (is24Hour) "HH:mm" else "h:mm a"
     val formatter = DateTimeFormatter.ofPattern(pattern)
-    return "${begin.toLocalLabel(formatter)} – ${end.toLocalLabel(formatter)}"
+    return "$prefix${begin.toLocalLabel(formatter)} – ${end.toLocalLabel(formatter)}"
+}
+
+/** Day name for events past today (e.g. a next-meeting fallback); null today. */
+private fun EventInstance.dayPrefix(): String? {
+    val zone = ZoneId.systemDefault()
+    val today = LocalDate.now(zone)
+    val date = begin.atZone(zone).toLocalDate()
+    return when {
+        !date.isAfter(today) -> null
+        date == today.plusDays(1) -> "Tomorrow"
+        else -> date.format(DateTimeFormatter.ofPattern("EEEE"))
+    }
 }
 
 private fun Instant.toLocalLabel(formatter: DateTimeFormatter): String =

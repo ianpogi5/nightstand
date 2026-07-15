@@ -20,21 +20,25 @@ data class EventInstance(
 object TodayEvents {
 
     /**
-     * All of today's instances from all visible calendars, soonest first —
-     * including ones already over, so the caller can cache the list and
-     * filter by the current time itself. Caller must hold READ_CALENDAR.
+     * All instances from today through the next [daysAhead] days across every
+     * visible calendar, soonest first — including ones already over, so the
+     * caller can cache the list and filter by the current time itself. The
+     * caller shows today's remaining events, or falls back to the next event
+     * in the window when today has none. Caller must hold READ_CALENDAR.
      */
     fun query(
         context: Context,
         hiddenCalendars: Set<Long> = emptySet(),
+        daysAhead: Int = 7,
     ): List<EventInstance> {
         val zone = ZoneId.systemDefault()
-        val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant()
-        val endOfDay = LocalDate.now(zone).plusDays(1).atStartOfDay(zone).toInstant()
+        val today = LocalDate.now(zone)
+        val startOfDay = today.atStartOfDay(zone).toInstant()
+        val endOfWindow = today.plusDays(daysAhead + 1L).atStartOfDay(zone).toInstant()
 
         val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().let {
             ContentUris.appendId(it, startOfDay.toEpochMilli())
-            ContentUris.appendId(it, endOfDay.toEpochMilli())
+            ContentUris.appendId(it, endOfWindow.toEpochMilli())
             it.build()
         }
         val projection = arrayOf(
@@ -72,7 +76,7 @@ object TodayEvents {
                     begin = begin.utcDateAtStartOfDay(zone)
                     end = end.utcDateAtStartOfDay(zone)
                 }
-                if (end < startOfDay || begin >= endOfDay) continue // not today
+                if (end < startOfDay || begin >= endOfWindow) continue // outside window
                 events += EventInstance(
                     eventId = cursor.getLong(0),
                     title = cursor.getString(1).orEmpty().ifBlank { "(untitled)" },
