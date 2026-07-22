@@ -107,14 +107,40 @@ fun CalendarColumn(
     val timeColor = if (dimmed) Color(0xFF565656) else Color(0xFF9A9A9A)
     val is24Hour = rememberIs24HourFormat()
 
+    val zone = ZoneId.systemDefault()
+    val today = LocalDate.now(zone)
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
+        var headerShownFor: LocalDate? = null
         events.forEach { event ->
+            val date = event.begin.atZone(zone).toLocalDate()
+            if (date.isAfter(today) && date != headerShownFor) {
+                headerShownFor = date
+                DayHeader(date, today, timeColor)
+            }
             EventRow(event, titleColor, timeColor, dimmed, is24Hour)
         }
     }
+}
+
+/** Section label dividing today's events from a later day's. */
+@Composable
+private fun DayHeader(date: LocalDate, today: LocalDate, color: Color) {
+    val label = if (date == today.plusDays(1)) {
+        "Tomorrow"
+    } else {
+        date.format(DateTimeFormatter.ofPattern("EEEE"))
+    }
+    Text(
+        text = label.uppercase(),
+        color = color,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 2.sp,
+        modifier = Modifier.padding(top = 8.dp),
+    )
 }
 
 @Composable
@@ -154,23 +180,10 @@ private fun EventRow(
 }
 
 private fun EventInstance.timeLabel(is24Hour: Boolean): String {
-    val prefix = dayPrefix()?.let { "$it · " }.orEmpty()
-    if (allDay) return "${prefix}All day"
+    if (allDay) return "All day"
     val pattern = if (is24Hour) "HH:mm" else "h:mm a"
     val formatter = DateTimeFormatter.ofPattern(pattern)
-    return "$prefix${begin.toLocalLabel(formatter)} – ${end.toLocalLabel(formatter)}"
-}
-
-/** Day name for events past today (e.g. a next-meeting fallback); null today. */
-private fun EventInstance.dayPrefix(): String? {
-    val zone = ZoneId.systemDefault()
-    val today = LocalDate.now(zone)
-    val date = begin.atZone(zone).toLocalDate()
-    return when {
-        !date.isAfter(today) -> null
-        date == today.plusDays(1) -> "Tomorrow"
-        else -> date.format(DateTimeFormatter.ofPattern("EEEE"))
-    }
+    return "${begin.toLocalLabel(formatter)} – ${end.toLocalLabel(formatter)}"
 }
 
 private fun Instant.toLocalLabel(formatter: DateTimeFormatter): String =
