@@ -42,11 +42,14 @@ import kotlinx.coroutines.withContext
 private const val MAX_EVENTS = 5
 
 /**
- * Today's remaining events, or — when today has none left — the next upcoming
- * event within the query window (the next 7 days). The provider is queried on
- * launch, at local-day rollover, and when calendar data changes
- * (ContentObserver); the minute tick only re-filters the cached list, so an
- * all-night session isn't issuing a ContentResolver query every minute.
+ * Today's remaining events plus tomorrow's, soonest first, capped at
+ * [MAX_EVENTS] — so spare slots surface tomorrow (e.g. a holiday) without
+ * pushing out anything left today. When both days are empty, falls back to
+ * the next upcoming event within the query window (the next 7 days). The
+ * provider is queried on launch, at local-day rollover, and when calendar
+ * data changes (ContentObserver); the minute tick only re-filters the cached
+ * list, so an all-night session isn't issuing a ContentResolver query every
+ * minute.
  */
 @Composable
 fun rememberTodayEvents(
@@ -86,11 +89,11 @@ fun rememberTodayEvents(
 
     val zone = ZoneId.systemDefault()
     val nowInstant = now.atZone(zone).toInstant()
-    val endOfToday = now.toLocalDate().plusDays(1).atStartOfDay(zone).toInstant()
+    val endOfTomorrow = now.toLocalDate().plusDays(2).atStartOfDay(zone).toInstant()
     return remember(todaysEvents, now.hour to now.minute) {
         val upcoming = todaysEvents.filter { it.end >= nowInstant }
-        val todayLeft = upcoming.filter { it.begin < endOfToday }
-        if (todayLeft.isNotEmpty()) todayLeft.take(MAX_EVENTS) else upcoming.take(1)
+        val throughTomorrow = upcoming.filter { it.begin < endOfTomorrow }
+        if (throughTomorrow.isNotEmpty()) throughTomorrow.take(MAX_EVENTS) else upcoming.take(1)
     }
 }
 

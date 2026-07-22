@@ -23,8 +23,9 @@ object TodayEvents {
      * All instances from today through the next [daysAhead] days across every
      * visible calendar, soonest first — including ones already over, so the
      * caller can cache the list and filter by the current time itself. The
-     * caller shows today's remaining events, or falls back to the next event
-     * in the window when today has none. Caller must hold READ_CALENDAR.
+     * caller shows today's remaining events plus tomorrow's, or falls back to
+     * the next event in the window when both days have none. Caller must hold
+     * READ_CALENDAR.
      */
     fun query(
         context: Context,
